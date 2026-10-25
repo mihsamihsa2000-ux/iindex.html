@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CollapseLoader — Универсальный лаунчер модов и модификаций</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090c10;
+      --card-bg: rgba(18, 23, 33, 0.75);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --accent-cyan: #00f2fe;
+      --accent-teal: #4facfe;
+      --primary: #00d2ff;
+      --primary-hover: #1ae0ff;
+      --text: #f0f6fc;
+      --text-muted: #8b949e;
+      --tag-bg: rgba(0, 210, 255, 0.12);
+      --tag-border: rgba(0, 210, 255, 0.28);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: 80px;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    /* Glow backdrop effects */
+    .glow-sphere {
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0, 210, 255, 0.15) 0%, rgba(0, 0, 0, 0) 70%);
+      top: -100px;
+      left: 20%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Header Navigation */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(16px);
+      background: rgba(9, 12, 16, 0.85);
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .nav-container {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: #fff;
+      font-weight: 800;
+      font-size: 1.25rem;
+      letter-spacing: 0.5px;
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #050b14;
+      font-weight: 900;
+      box-shadow: 0 0 20px rgba(0, 210, 255, 0.35);
+    }
+
+    nav {
+      display: flex;
+      gap: 32px;
+    }
+
+    nav a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.95rem;
+      transition: color 0.2s;
+    }
+
+    nav a:hover, nav a.active {
+      color: #ffffff;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .lang-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--card-border);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-nav-download {
+      background: #00d2ff;
+      color: #090c10;
+      padding: 9px 20px;
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+      box-shadow: 0 4px 15px rgba(0, 210, 255, 0.25);
+    }
+
+    .btn-nav-download:hover {
+      background: var(--primary-hover);
+      box-shadow: 0 4px 22px rgba(0, 210, 255, 0.45);
+      transform: translateY(-1px);
+    }
+
+    /* Main Container */
+    .container {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 60px 24px 100px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Hero Section */
+    .hero {
+      display: grid;
+      grid-template-columns: 1.15fr 0.95fr;
+      gap: 50px;
+      align-items: center;
+      margin-bottom: 90px;
+    }
+
+    .badge-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--tag-bg);
+      border: 1px solid var(--tag-border);
+      padding: 6px 14px;
+      border-radius: 30px;
+      margin-bottom: 24px;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      background: #00d2ff;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #00d2ff;
+    }
+
+    .badge-text {
+      color: #00d2ff;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .hero-title {
+      font-size: 4rem;
+      font-weight: 900;
+      line-height: 1.05;
+      margin-bottom: 16px;
+      letter-spacing: -1.5px;
+      text-transform: uppercase;
+    }
+
+    .hero-title .highlight {
+      display: block;
+      color: #00d2ff;
+      text-shadow: 0 0 30px rgba(0, 210, 255, 0.3);
+    }
+
+    .hero-desc {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 36px;
+      max-width: 520px;
+    }
+
+    .cta-group {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 48px;
+    }
+
+    .btn-main-download {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      background: #00d2ff;
+      color: #090c10;
+      padding: 16px 28px;
+      border-radius: 14px;
+      text-decoration: none;
+      font-weight: 800;
+      font-size: 1.05rem;
+      transition: all 0.25s;
+      box-shadow: 0 8px 30px rgba(0, 210, 255, 0.35);
+    }
+
+    .btn-main-download:hover {
+      background: var(--primary-hover);
+      box-shadow: 0 10px 40px rgba(0, 210, 255, 0.55);
+      transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      color: #fff;
+      padding: 16px 24px;
+      border-radius: 14px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 1rem;
+      transition: all 0.2s;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .stats-row {
+      display: flex;
+      gap: 48px;
+      border-top: 1px solid var(--card-border);
+      padding-top: 28px;
+    }
+
+    .stat-item .val {
+      font-size: 1.9rem;
+      font-weight: 800;
+      color: #ffffff;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .stat-item .lbl {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Mockup Window on Right */
+    .mockup-window {
+      background: #0d121c;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 20px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.65), 0 0 40px rgba(0, 210, 255, 0.1);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .window-header {
+      padding: 14px 18px;
+      background: #141b29;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .window-controls {
+      display: flex;
+      gap: 8px;
+    }
+
+    .win-dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+    }
+    .win-red { background: #ff5f56; }
+    .win-yellow { background: #ffbd2e; }
+    .win-green { background: #27c93f; }
+
+    .window-title {
+      font-size: 0.8rem;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+    }
+
+    .window-content {
+      padding: 24px;
+      min-height: 380px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      background: radial-gradient(circle at center, #131a29 0%, #0d121c 100%);
+    }
+
+    /* Client Toggles Overlay in Mockup */
+    .mockup-toggles {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      max-width: 260px;
+    }
+
+    .mockup-toggle-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .mockup-toggle-item span {
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .switch-pill {
+      width: 32px;
+      height: 18px;
+      background: #00d2ff;
+      border-radius: 20px;
+      position: relative;
+    }
+
+    .switch-pill::after {
+      content: '';
+      position: absolute;
+      right: 2px;
+      top: 2px;
+      width: 14px;
+      height: 14px;
+      background: #090c10;
+      border-radius: 50%;
+    }
+
+    .mockup-center-preview {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 10px 0;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .client-avatar-badge {
+      width: 80px;
+      height: 80px;
+      background: #192437;
+      border: 2px solid #00d2ff;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 25px rgba(0, 210, 255, 0.3);
+    }
+
+    .hotbar-mockup {
+      display: flex;
+      gap: 6px;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 8px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      margin: 0 auto;
+    }
+
+    .hotbar-slot {
+      width: 36px;
+      height: 36px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .hotbar-slot.active {
+      border-color: #00d2ff;
+      background: rgba(0, 210, 255, 0.1);
+    }
+
+    /* Features Section */
+    .section-header {
+      margin-bottom: 40px;
+    }
+
+    .section-subtitle {
+      color: #00d2ff;
+      font-weight: 700;
+      font-size: 0.85rem;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .section-title {
+      font-size: 2.4rem;
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+
+    .section-desc {
+      color: var(--text-muted);
+      font-size: 1rem;
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 32px 28px;
+      transition: all 0.25s;
+    }
+
+    .card:hover {
+      border-color: rgba(0, 210, 255, 0.4);
+      transform: translateY(-4px);
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3), 0 0 20px rgba(0, 210, 255, 0.08);
+    }
+
+    .card-icon {
+      width: 50px;
+      height: 50px;
+      background: rgba(0, 210, 255, 0.1);
+      border: 1px solid rgba(0, 210, 255, 0.25);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 22px;
+      color: #00d2ff;
+    }
+
+    .card-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .card-text {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    /* Clients Grid Section */
+    .clients-section {
+      margin-top: 80px;
+      padding: 40px;
+      background: rgba(18, 23, 33, 0.4);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+    }
+
+    .clients-pill-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .client-tag {
+      padding: 10px 18px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .client-tag:hover {
+      border-color: #00d2ff;
+      background: rgba(0, 210, 255, 0.08);
+      cursor: pointer;
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--card-border);
+      padding: 40px 24px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-top: 60px;
+    }
+
+    @media (max-width: 900px) {
+      .hero {
+        grid-template-columns: 1fr;
+      }
+      .hero-title {
+        font-size: 2.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="glow-sphere"></div>
+
+  <!-- Header -->
+  <header>
+    <div class="nav-container">
+      <a href="#" class="logo">
+        <div class="logo-icon">C</div>
+        COLLAPSE
+      </a>
+      <nav>
+        <a href="#home" class="active">Главная</a>
+        <a href="#features">Возможности</a>
+        <a href="#clients">Клиенты</a>
+        <a href="#download">Установка</a>
+      </nav>
+      <div class="nav-actions">
+        <div class="lang-badge">RU ▾</div>
+        <a href="CollapseLoader-portable_1.3.0.exe" download="CollapseLoader-portable_1.3.0.exe" class="btn-nav-download">Скачать</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Content -->
+  <main class="container" id="home">
+    <section class="hero">
+      <div class="hero-left">
+        <div class="badge-wrap">
+          <span class="dot"></span>
+          <span class="badge-text">RELEASE • ВЕРСИЯ 1.3.0 PORTABLE</span>
+        </div>
+        <h1 class="hero-title">
+          COLLAPSE <span class="highlight">LOADER</span>
+        </h1>
+        <p class="hero-desc">
+          Универсальный лаунчер с огромным выбором модификаций и готовых клиентов для Minecraft. Высокий FPS, быстрая загрузка и удобное переключение сборок в один клик.
+        </p>
+
+        <div class="cta-group" id="download">
+          <a href="CollapseLoader-portable_1.3.0.exe" download="CollapseLoader-portable_1.3.0.exe" class="btn-main-download">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Скачать CollapseLoader
+          </a>
+          <a href="#features" class="btn-secondary">
+            Подробнее ▾
+          </a>
+        </div>
+
+        <div class="stats-row">
+          <div class="stat-item">
+            <div class="val">50 000+</div>
+            <div class="lbl">активных игроков</div>
+          </div>
+          <div class="stat-item">
+            <div class="val">1.12.2 - 1.21</div>
+            <div class="lbl">все версии Minecraft</div>
+          </div>
+          <div class="stat-item">
+            <div class="val">240+ FPS</div>
+            <div class="lbl">встроенная оптимизация</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hero Visual Mockup -->
+      <div class="hero-right">
+        <div class="mockup-window">
+          <div class="window-header">
+            <div class="window-controls">
+              <div class="win-dot win-red"></div>
+              <div class="win-dot win-yellow"></div>
+              <div class="win-dot win-green"></div>
+            </div>
+            <div class="window-title">COLLAPSE LOADER • PORTABLE 1.3.0</div>
+            <div style="width: 40px;"></div>
+          </div>
+          <div class="window-content">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div class="mockup-toggles">
+                <div class="mockup-toggle-item">
+                  <span>Attack Aura</span>
+                  <div class="switch-pill"></div>
+                </div>
+                <div class="mockup-toggle-item">
+                  <span>Target Strafe</span>
+                  <div class="switch-pill"></div>
+                </div>
+                <div class="mockup-toggle-item">
+                  <span>Crystal Aura</span>
+                  <div class="switch-pill"></div>
+                </div>
+                <div class="mockup-toggle-item">
+                  <span>ESP Visuals</span>
+                  <div class="switch-pill"></div>
+                </div>
+              </div>
+
+              <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: #00d2ff; text-align: right;">
+                XYZ: 1024 / 64 / -512<br>
+                <span style="color: #27c93f;">● FPS 240</span>
+              </div>
+            </div>
+
+            <div class="mockup-center-preview">
+              <div class="client-avatar-badge">
+                <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#00d2ff" stroke-width="2">
+                  <rect x="2" y="2" width="20" height="20" rx="4"></rect>
+                  <circle cx="8.5" cy="8.5" r="1.5" fill="#00d2ff"></circle>
+                  <circle cx="15.5" cy="8.5" r="1.5" fill="#00d2ff"></circle>
+                  <path d="M9 15h6"></path>
+                </svg>
+              </div>
+              <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Готов к запуску</span>
+            </div>
+
+            <div class="hotbar-mockup">
+              <div class="hotbar-slot"></div>
+              <div class="hotbar-slot"></div>
+              <div class="hotbar-slot active"></div>
+              <div class="hotbar-slot"></div>
+              <div class="hotbar-slot"></div>
+              <div class="hotbar-slot"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features">
+      <div class="section-header">
+        <div class="section-subtitle">ВОЗМОЖНОСТИ</div>
+        <h2 class="section-title">Всё для комфортной игры</h2>
+        <p class="section-desc">Все необходимые клиенты и модификации уже встроены и готовы к запуску без лишней настройки.</p>
+      </div>
+
+      <div class="cards-grid">
+        <div class="card">
+          <div class="card-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+          </div>
+          <h3 class="card-title">Огромная библиотека</h3>
+          <p class="card-text">Поддержка ведущих сборок и клиентов для Minecraft (Nursultan, Dimasik, Celestial, Wild и многих других).</p>
+        </div>
+
+        <div class="card">
+          <div class="card-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+          </div>
+          <h3 class="card-title">FPS Boost & Оптимизация</h3>
+          <p class="card-text">Встроенные моды оптимизации рендера обеспечивают стабильный фреймрейт даже на слабых конфигурациях ПК.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          </div>
+          <h3 class="card-title">Быстрый запуск</h3>
+          <p class="card-text">Portable-версия не требует установки в систему: скачайте исполняемый файл и запускайте любимый клиент мгновенно.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Clients List Preview -->
+    <section class="clients-section" id="clients">
+      <div class="section-subtitle">КАТАЛОГ СБОРОК</div>
+      <h3 style="font-size: 1.6rem; margin-top: 6px; font-weight: 800;">Доступные клиенты в CollapseLoader</h3>
+      <div class="clients-pill-list">
+        <div class="client-tag">⚡ Nursultan Client</div>
+        <div class="client-tag">💠 Dimasik Client</div>
+        <div class="client-tag">🗡️ Celestial Premium</div>
+        <div class="client-tag">🛡️ Wild Client</div>
+        <div class="client-tag">🎯 Expensive 3.1</div>
+        <div class="client-tag">⚡ Akrien Free/Beta</div>
+        <div class="client-tag">💎 Excellent Client</div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>© 2026 CollapseLoader. Все права защищены. Дизайн в стиле современного темного интерфейса.</p>
+  </footer>
+
+  <!-- Download Toast Notification -->
+  <div id="toast" style="
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: #141b29;
+    border: 1px solid #00d2ff;
+    border-radius: 12px;
+    padding: 14px 20px;
+    color: #fff;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 10px 30px rgba(0, 210, 255, 0.25);
+    z-index: 999;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: none;
+  ">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00d2ff" stroke-width="2.5">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+      <polyline points="7 10 12 15 17 10"></polyline>
+      <line x1="12" y1="15" x2="12" y2="3"></line>
+    </svg>
+    <div>
+      <div style="font-weight: 700; color: #00d2ff;">Загрузка началась</div>
+      <div style="font-size: 0.8rem; color: #8b949e;">CollapseLoader-portable_1.3.0.exe</div>
+    </div>
+  </div>
+
+  <script>
+    // Toast notification function
+    function showDownloadToast() {
+      const toast = document.getElementById('toast');
+      if (!toast) return;
+      toast.style.transform = 'translateY(0)';
+      toast.style.opacity = '1';
+      setTimeout(() => {
+        toast.style.transform = 'translateY(100px)';
+        toast.style.opacity = '0';
+      }, 4000);
+    }
+
+    // Attach click listeners to download buttons
+    document.querySelectorAll('.btn-main-download, .btn-nav-download').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        showDownloadToast();
+      });
+    });
+
+    // Smooth navigation and active link highlight
+    document.querySelectorAll('nav a, .btn-secondary').forEach(link => {
+      link.addEventListener('click', function(e) {
+        const href = this.getAttribute('href');
+        if (href && href.startsWith('#')) {
+          e.preventDefault();
+          const target = document.querySelector(href);
+          if (target) {
+            target.scrollIntoView({ behavior: 'smooth' });
+            document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+            if (this.closest('nav')) {
+              this.classList.add('active');
+            }
+          }
+        }
+      });
+    });
+
+    // Interactive Client Tags in Catalog
+    const clientTags = document.querySelectorAll('.client-tag');
+    const winTitle = document.querySelector('.window-title');
+    const clientBadgeText = document.querySelector('.mockup-center-preview span');
+
+    clientTags.forEach(tag => {
+      tag.addEventListener('click', () => {
+        clientTags.forEach(t => {
+          t.style.borderColor = 'var(--card-border)';
+          t.style.background = 'rgba(255, 255, 255, 0.04)';
+        });
+        tag.style.borderColor = '#00d2ff';
+        tag.style.background = 'rgba(0, 210, 255, 0.12)';
+        
+        const clientName = tag.textContent.trim().replace(/^[^a-zA-Zа-яА-Я0-9]+\s*/, '');
+        if (winTitle) winTitle.textContent = clientName.toUpperCase() + ' • LOADED';
+        if (clientBadgeText) clientBadgeText.textContent = clientName + ' готов к запуску';
+      });
+    });
+
+    // Language toggle badge demo
+    const langBadge = document.querySelector('.lang-badge');
+    if (langBadge) {
+      langBadge.addEventListener('click', () => {
+        langBadge.textContent = langBadge.textContent.includes('RU') ? 'EN ▾' : 'RU ▾';
+      });
+    }
+  </script>
+</body>
+</html>
